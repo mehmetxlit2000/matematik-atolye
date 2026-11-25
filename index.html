@@ -74,13 +74,18 @@ h1{background:linear-gradient(120deg,#14161f 35%,#4f46e5 100%);-webkit-backgroun
 .nt div{padding:8px 0;border-top:1px dashed var(--line);overflow-x:auto}
 mjx-container{max-width:100%}
 @media(max-width:480px){.wrap{padding:24px 14px 48px}.card{padding:18px}h1{font-size:28px}.stats b{font-size:21px}}
+.seg{flex-wrap:wrap}
+.mx{overflow:hidden}.mx mjx-container{margin:4px 0!important}
+.stk{margin:6px 0}.stk mjx-container{margin:8px 0!important}
+.stk .blk{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line);overflow-x:auto}
+.stk .big{font-size:1.35em}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="badge">∑ Sonsuz Alıştırma</div><h1>Matematik Atölyesi</h1>
   <p class="sub">Sonsuz soru, temiz sayılar. Çöz, kontrol et, adım adım çözümü gör.</p><div class="stats"><div><b id="s1">0</b><span>Çözülen soru</span></div><div><b id="s2">0</b><span>Denenen</span></div><div><b id="s3">–</b><span>Başarı</span></div></div>
-  <div class="seg"><button id="t-mat" class="on">Matrisler</button><button id="t-base">Taban Aritmetiği</button><button id="t-rad">Köklü İfadeler</button><button id="t-not"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M8 9h8M8 13h6"/></svg>Notlar</button></div>
+  <div class="seg"><button id="t-mat" class="on">Matrisler</button><button id="t-base">Taban Aritmetiği</button><button id="t-rad">Köklü İfadeler</button><button id="t-nest">Kompleks</button><button id="t-not"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M8 9h8M8 13h6"/></svg>Notlar</button></div>
   <div class="chips" id="chips"></div>
   <div id="notes" hidden>
 <section class="nt"><h2>Üslü Sayılar</h2>
@@ -123,7 +128,9 @@ const flat=m=>m.flat().map(v=>({a:v,t:"n"}));
 const rad=(s,i)=>`\\sqrt${i?`[${i}]`:""}{${s}}`;
 const Ma=m=>`<div class="mx">\\[\\left[\\begin{array}{${"c".repeat(m[0].length-1)}|c}${m.map(r=>r.join("&")).join("\\\\")}\\end{array}\\right]\\]</div>`;
 const PK=[2,3,5,6,7,10,11,13];
-const tx=e=>window.MathJax&&MathJax.typesetPromise&&MathJax.typesetPromise([e]);
+const tx=e=>window.MathJax&&MathJax.typesetPromise&&MathJax.typesetPromise([e]).then(()=>fit(e));
+function fit(r){r.querySelectorAll("mjx-container").forEach(c=>{c.style.zoom=1;const sv=c.querySelector("svg");if(!sv)return;const w=sv.getBoundingClientRect().width,pw=c.parentElement.clientWidth;if(w>pw)c.style.zoom=(pw/w*.98).toFixed(3)})}
+addEventListener("resize",()=>{fit(document.getElementById("qa"));fit(document.getElementById("sol"))});
 const W=h=>h.replace(/<div class="eqs">([\s\S]*?)<\/div>/g,(_,x)=>`<div class="eqs">${x.replace(/₁₀/g,"_{10}").replace(/₂/g,"_2").split("<br>").map(l=>`\\(\\displaystyle ${l}\\)`).join("<br>")}</div>`);
 const FM={esl1:String.raw`(\sqrt{a}-\sqrt{b})(\sqrt{a}+\sqrt{b})=a-b`,esl2:String.raw`\frac{1}{\sqrt{a}-\sqrt{b}}=\frac{\sqrt{a}+\sqrt{b}}{a-b}`,oz:String.raw`\sqrt{a\pm2\sqrt{b}}=\sqrt{x}\pm\sqrt{y},\ x+y=a,\ xy=b,\ x>y`,sonP:String.raw`\sqrt{a+\sqrt{a+\sqrt{a+\dots}}}=\frac{1+\sqrt{1+4a}}{2}`,sonM:String.raw`\sqrt{a-\sqrt{a-\sqrt{a-\dots}}}=\frac{-1+\sqrt{1+4a}}{2}`,kc:String.raw`\sqrt[n]{x\cdot\sqrt[n]{x\cdot\sqrt[n]{x\cdots}}}=\sqrt[n-1]{x}`,bol:String.raw`\sqrt{x\div\sqrt{x\div\sqrt{x\div\dots}}}=\sqrt[3]{x}`};
 const mm=(a,b)=>`<div class="row">${M(a)}<span class="op">${b.op}</span>${M(b.m)}<span class="op">=</span><span class="op">?</span></div>`;
@@ -192,8 +199,53 @@ b2_10(){const n=R(3,31),s=n.toString(2),L=s.length;
  return{q:"İkilik sayıyı onluk tabana çevir.",h:`<div class="eqs">${s}₂ = ?₁₀</div>`,f:[{a:n,t:"n",l:"Sonuç (₁₀)"}],inline:1,
  s:`<p>Her basamak 2'nin kuvvetiyle çarpılır (sağdan 1, 2, 4, 8, 16...):</p><p>${[...s].map((d,i)=>`${d}·${2**(L-1-i)}`).join(" + ")} = <b>${n}</b></p>`}}
 };
+const DT=String.raw`\dots`,CD=String.raw`\cdot`,DV=String.raw`\div`,b2=x=>x.toString(2),bs=v=>(v<0?"-":"")+b2(Math.abs(v));
+const BM=m=>String.raw`\begin{bmatrix}${m.map(r=>r.join("&")).join(String.raw`\\`)}\end{bmatrix}`;
+const OZ=(p,q,sg)=>{const a=p*p+q*q,b=p*p*q*q;return{a,b,t:rad(`${b2(a)}${sg}10${rad(b2(b))}`)}};
+const ozE=(o,p,q,sg)=>String.raw`${b2(o.a)}=${o.a},\ ${b2(o.b)}=${o.b},\ 10=2\Rightarrow\ x+y=${o.a},\ xy=${o.b}\Rightarrow\ \sqrt{${p*p}}${sg}\sqrt{${q*q}}=${p}${sg}${q}=${Math.abs(sg==="+"?p+q:p-q)}`;
+const core=(m,mode)=>{
+ if(m===0){const p=R(1,2),o=OZ(p,p,"-");return{t:o.t,e:ozE(o,p,p,"-")}}
+ const ls=[];if(mode!=="oz"){ls.push("sM");if(m>=2)ls.push("sP","kc","bol")}
+ const k=ls[R(0,ls.length-1)];let t,q,a,A,pre="";
+ if(k==="oz"){let p,qq,sg;if(m>=3&&Math.random()<.5){sg="+";qq=R(1,Math.floor((m-1)/2));p=m-qq}else{sg="-";qq=m<=3?R(1,2):1;p=m+qq}
+  const o=OZ(p,qq,sg);return{t:o.t,e:ozE(o,p,qq,sg)}}
+ if(k==="sM"){a=m*(m+1);A=b2(a);t=rad(`${A}-${rad(`${A}-${DT}`)}`);q=`x^2+x-${a}=0`}
+ if(k==="sP"){a=m*(m-1);A=b2(a);t=rad(`${A}+${rad(`${A}+${DT}`)}`);q=`x^2-x-${a}=0`}
+ if(k==="kc"){const n=R(3,4);a=m**(n-1);A=b2(a);t=rad(`${A}${CD}${rad(`${A}${CD}${DT}`,b2(n))}`,b2(n));q=`y^{${n-1}}=${a}`;pre=String.raw`${b2(n)}=${n},\ `}
+ if(k==="bol"){a=m**3;A=b2(a);t=rad(`${A}${DV}${rad(`${A}${DV}${DT}`)}`);q=`y^3=${a}`}
+ return{t,e:String.raw`${pre}${b2(a)}=${a}\Rightarrow\ ${q}\Rightarrow\ ${m}`}};
+const ent=(v,mode)=>{const m=Math.abs(v),ng=v<0?"-":"";let t,e;
+ if(mode==="kx"&&m>=2){const m1=R(1,m-1),c1=core(m1,"mix"),c2=core(m-m1,"mix");t=`${c1.t}+${c2.t}`;e=String.raw`${c1.e}\ ;\ ${c2.e}\Rightarrow\ ${m1}+${m-m1}=${m}`}
+ else{const c=core(m,mode==="kx"?"mix":mode);t=c.t;e=c.e}
+ const T=String.raw`${ng}\left(${t}\right)_{2}`;return{t:T,e:String.raw`\(${T}:\ ${e}${ng?String.raw`\Rightarrow\ ${v}`:""}\)`}};
+const unim=(n,nz)=>{for(;;){let A;if(n===2){A=mat(2,2,-5,5);if(Math.abs(d2(A))!==1)continue}else{const L=[[1,0,0],[R(-2,2),1,0],[R(-2,2),R(-2,2),1]],U=[[1,R(-2,2),R(-2,2)],[0,1,R(-2,2)],[0,0,1]];A=L.map(r=>[0,1,2].map(j=>r.reduce((t,v,k)=>t+v*U[k][j],0)));if(Math.random()<.5)A=[A[1],A[0],A[2]]}
+ const f=A.flat(),mx=Math.max(...f.map(Math.abs)),z=f.filter(v=>v===0).length;if(mx<2||mx>6||z>(n===2?1:3)||(nz&&z))continue;return A}};
+const prep=(n,mode)=>{const A=unim(n,true),E=A.map(r=>r.map(v=>ent(v,mode))),D=n===2?d2(A):d3(A);let adj,C;
+ if(n===2)adj=[[A[1][1],-A[0][1]],[-A[1][0],A[0][0]]];
+ else{const cf=(i,j)=>{const r=[0,1,2].filter(x=>x!==i),c=[0,1,2].filter(x=>x!==j);return((i+j)%2?-1:1)*d2([[A[r[0]][c[0]],A[r[0]][c[1]]],[A[r[1]][c[0]],A[r[1]][c[1]]]])};C=[0,1,2].map(i=>[0,1,2].map(j=>cf(i,j)));adj=[0,1,2].map(i=>[0,1,2].map(j=>C[j][i]))}
+ const inv=adj.map(r=>r.map(v=>v/D+0));
+ const s1=`<p><b>1) Her elemanı çöz</b> (2 tabanındaki sayılar önce onluğa çevrilir)</p>${E.flat().map(x=>`<p>${x.e}</p>`).join("")}<p><b>2) Sade matris (onluk)</b></p>${M(A)}`;const st=s1+`<p><b>3) Determinant</b></p><p>${n===2?d2s(A):d3s(A)}</p><p>Determinant ${D} olduğu için ters matrisin elemanları tam sayıdır.</p>`+(n===2?`<p><b>4) Ters</b> = 1/det · <code>[d −b; −c a]</code></p>${M(adj)}<p>Her sayıyı ${D}'e böl:</p>${M(inv)}`:`<p><b>4) Kofaktör matrisi</b></p>${M(C)}<p><b>5) Ek matris</b> (kofaktörün devriği)</p>${M(adj)}<p><b>6) Ek matrisi det = ${D}'e böl</b></p>${M(inv)}`);
+ return{A,E,D,inv,st,s1}};
+const AM=E=>String.raw`\[A=${BM(E.map(r=>r.map(x=>x.t)))}\]`;
+const nestG=(n,mode)=>()=>{const{A,E,s1}=prep(n,mode);
+ const V=[..."xyz"].slice(0,n),Bv=Array.from({length:n},()=>R(-4,5));
+ if(Bv.every(v=>v===0))Bv[0]=R(1,4);
+ const X=A.map(r=>r.reduce((t,v,k)=>t+v*Bv[k],0)),col=a=>String.raw`\begin{bmatrix}${a.join(String.raw`\\`)}\end{bmatrix}`;
+ return{q:`Elemanları 2 tabanında verilen ${n}×${n} A matrisi için A⁻¹·X = B olduğuna göre X matrisinin elemanlarını bul. Cevaplar onluk tabanda ve tam sayıdır.`,fm:"A⁻¹·X = B eşitliğinin iki tarafını soldan A ile çarp: A·A⁻¹·X = A·B ⇒ X = A·B. Önce A'yı onluğa çevir, sonra A·B çarpımını yap.",h:String.raw`<div class="stk">${AM(E)}<div class="blk">\[A^{-1}\cdot ${col(V)}=${col(Bv)}\]</div></div>`,f:X.map((v,i)=>({a:v,t:"n",l:V[i]})),inline:1,hint:"Sonuçlar tam sayıdır, kesir çıkmaz. Negatifse başına − koy.",
+ s:s1+`<p><b>3) Denklemi çöz</b></p><p>A⁻¹·X = B eşitliğini soldan A ile çarparsak X = A·B olur (tersi hesaplamaya gerek yok).</p><p>${M(A)}·${M(Bv.map(v=>[v]))}</p>`+A.map((r,i)=>`<p>${V[i]} = ${r.map((v,k)=>`${P(v)}·${P(Bv[k])}`).join(" + ")} = <b>${X[i]}</b></p>`).join("")}};
+const nestI=(n,mode)=>()=>{const{E,inv,st}=prep(n,mode);
+ const ps=[];for(let i=0;i<n;i++)for(let j=0;j<n;j++)ps.push([i,j]);ps.sort(()=>Math.random()-.5);
+ const[P1,P2,P3]=ps,nm=([i,j])=>`b_{${i+1}${j+1}}`,vl=([i,j])=>inv[i][j],p=vl(P1),q=vl(P2),r=vl(P3);let ut,uv,wt,wv;
+ if(Math.random()<.5){ut=`${nm(P1)}+${nm(P2)}^{2}`;uv=p+q*q;wt=`${nm(P3)}^{2}+1`;wv=r*r+1}
+ else{ut=`${nm(P1)}${CD} ${nm(P2)}-${nm(P3)}`;uv=p*q-r;wt=`|${nm(P3)}|+|${nm(P1)}|+1`;wv=Math.abs(r)+Math.abs(p)+1}
+ const k=[2,3,5][R(0,2)],gt=Math.random()<.5,xs=uv>0?`x-${uv}`:uv<0?`x+${-uv}`:"x",L=uv-wv,U=uv+wv;
+ const ineq=`${k}^{|x-(${ut})|}${gt?">":String.raw`\le`}${k}^{${wt}}`;
+ const sol=`<p><b>Eşitsizlik adımı</b></p><p>\\(${nm(P1)}=${p},\\ ${nm(P2)}=${q},\\ ${nm(P3)}=${r}\\)</p><p>\\(${ut}=${uv}\\), \\(${wt}=${wv}\\)</p><p>\\(${k}^{|${xs}|}${gt?">":String.raw`\le`}${k}^{${wv}}\\)</p><p>Taban ${k} &gt; 1 olduğu için üsler aynı yönde karşılaştırılır: \\(|${xs}|${gt?">":String.raw`\le`}${wv}\\)</p>`+(gt?`<p>Mutlak değer büyüktür: \\(${xs}>${wv}\\) veya \\(${xs}<-${wv}\\) ⇒ <b>x &lt; ${L}</b> veya <b>x &gt; ${U}</b></p>`:`<p>\\(-${wv}\\le ${xs}\\le ${wv}\\) ⇒ <b>${L} ≤ x ≤ ${U}</b>. Tam sayı adedi: ${U} − (${L}) + 1 = <b>${2*wv+1}</b></p>`);
+ return{q:String.raw`\(A\) matrisinin tersi \(B=A^{-1}=[b_{ij}]\) olsun (elemanlar 2 tabanında, cevaplar onluk tabanda). Eşitsizliğin çözümünü bul.`,fm:gt?"Çözüm kümesi: x < p veya x > q":"Çözüm kümesi: alt sınır ≤ x ≤ üst sınır",h:String.raw`<div class="stk">${AM(E)}<div class="blk big">\[${ineq}\]</div></div>`,f:gt?[{a:L,t:"n",l:"p"},{a:U,t:"n",l:"q"}]:[{a:L,t:"n",l:"Alt sınır"},{a:U,t:"n",l:"Üst sınır"},{a:2*wv+1,t:"n",l:"Tam sayı adedi"}],inline:1,hint:"Önce A⁻¹'i bul, sonra b değerlerini yerine koy. Kesir yok.",s:st+sol}};
+Object.assign(G,{n2i:nestI(2,"mix"),n3i:nestI(3,"mix"),n2ki:nestI(2,"kx"),n2:nestG(2,"mix"),n3:nestG(3,"mix"),n2k:nestG(2,"kx"),n2o:nestG(2,"oz"),n2s:nestG(2,"inf"),n3s:nestG(3,"inf")});
 const T={mat:[["top","Toplama"],["cik","Çıkarma"],["trn","Transpoz"],["ters","Ters Matris"],["d2","Determinant 2×2"],["d3","Determinant 3×3"],["c2","Cramer 2×2"],["c3","Cramer 3×3"],["gauss","Gauss Yok Etme"]],
 rad:[["esl1","Eşlenik Çarpımı"],["esl2","Eşlenikle Sadeleştirme"],["oz","Özel Kök"],["sonP","Sonsuz Kök (+)"],["sonM","Sonsuz Kök (−)"],["kc","Sonsuz Kök Çarpımı"],["bol","Sonsuz Kök Bölümü"]],base:[["bTop","Toplama"],["bCik","Çıkarma"],["bCarp","Çarpma"],["b10_2","10 → 2"],["b2_10","2 → 10"]]};
+T.nest=[["n2i","2×2 Eşitsizlik"],["n3i","3×3 Eşitsizlik"],["n2ki","2×2 Kompleks Eşitsizlik"],["n2","2×2 Ters"],["n3","3×3 Ters"],["n2k","2×2 Kompleks Ters"]];
 const $=id=>document.getElementById(id);
 let grp="mat",key="top",cur,ok=0,tot=0,done=false,tried=false;
 function chips(){$("chips").innerHTML="";T[grp].forEach(([k,n])=>{const b=document.createElement("button");b.className="chip"+(k===key?" on":"");b.textContent=n;b.onclick=()=>{key=k;chips();gen()};$("chips").appendChild(b)})}
@@ -207,7 +259,7 @@ function gen(){cur=G[key]();done=false;tried=false;$("sc").textContent="Bu soru:
  const first=document.querySelector("#fields input");if(first)first.focus()}
 function parse(s){s=s.trim().replace(",",".").replace("−","-");if(/^-?\d+\/\d+$/.test(s)){const[a,b]=s.split("/");return a/b}return s===""?NaN:Number(s)}
 function check(){let all=true;document.querySelectorAll("#fields input").forEach(inp=>{const x=cur.f[inp.dataset.i];let good;
- if(x.t==="b"){const v=inp.value.replace(/\s/g,"").replace(/^0+(?=.)/,"");good=v===x.a}else good=Math.abs(parse(inp.value)-x.a)<1e-6;
+ if(x.t==="b"){const v=inp.value.replace(/\s/g,"").replace("−","-").replace(/^0+(?=.)/,"");good=v===x.a}else good=Math.abs(parse(inp.value)-x.a)<1e-6;
  inp.className=good?"ok":"no";if(!good)all=false});
  const fb=$("fb");if(all){fb.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Doğru!';fb.className="fb ok"}else{fb.textContent="Henüz değil, tekrar dene ya da çözümü göster.";fb.className="fb no"}
  if(!tried){tried=true;tot++}if(all&&!done){done=true;ok++}stats();$("sc").textContent=done?"Bu soru: çözüldü":"Bu soru: deneniyor…"
@@ -216,8 +268,8 @@ $("chk").onclick=check;
 $("shw").onclick=()=>{$("sol").innerHTML=`<div class="sol"><b>Çözüm</b>${cur.s}</div>`;tx($("sol"))};
 $("nxt").onclick=gen;
 document.addEventListener("keydown",e=>{if(e.key==="Enter")check()});
-function tab(g){$("notes").hidden=g!=="not";$("chips").hidden=g==="not";$("cardbox").hidden=g==="not";$("t-not").className=g==="not"?"on":"";if(g==="not"){$("t-mat").className=$("t-base").className=$("t-rad").className="";return}grp=g;key=T[g][0][0];$("t-mat").className=g==="mat"?"on":"";$("t-base").className=g==="base"?"on":"";$("t-rad").className=g==="rad"?"on":"";chips();gen()}function stats(){$("s1").textContent=ok;$("s2").textContent=tot;$("s3").textContent=tot?Math.round(ok/tot*100)+"%":"–"}
-$("t-mat").onclick=()=>tab("mat");$("t-base").onclick=()=>tab("base");$("t-rad").onclick=()=>tab("rad");$("t-not").onclick=()=>tab("not");
+function tab(g){const nt=g==="not";$("notes").hidden=!nt;$("chips").hidden=nt;$("cardbox").hidden=nt;["mat","nest","base","rad","not"].forEach(k=>$("t-"+k).className=k===g?"on":"");if(nt)return;grp=g;key=T[g][0][0];chips();gen()}function stats(){$("s1").textContent=ok;$("s2").textContent=tot;$("s3").textContent=tot?Math.round(ok/tot*100)+"%":"–"}
+$("t-mat").onclick=()=>tab("mat");$("t-base").onclick=()=>tab("base");$("t-rad").onclick=()=>tab("rad");$("t-nest").onclick=()=>tab("nest");$("t-not").onclick=()=>tab("not");
 chips();gen();
 </script>
 </body>
